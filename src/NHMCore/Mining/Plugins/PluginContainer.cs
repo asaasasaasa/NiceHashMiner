@@ -326,33 +326,37 @@ namespace NHMCore.Mining.Plugins
         #region DriverRequirement
         void CheckDevicesDriverVersionsAndNotify(IEnumerable<BaseDevice> devices)
         {
-            //List<(int, BaseDevice, Version)> listOfOldDrivers = new List<(int, BaseDevice, Version)>();
-            //foreach(BaseDevice dev in devices)
-            //{
-            //    if (_plugin is IDriverIsMinimumRequired minReq)
-            //    {
-            //        (int ok, Version ver) = minReq.IsDriverMinimumRequired(dev);
-            //        if (ok == -2)
-            //        {
-            //            listOfOldDrivers.Add((0, dev, ver));//0 == required
-            //            continue;//dont need recommended in this case
-            //        }
-            //    }
-            //    if (_plugin is IDriverIsMinimumRecommended minRec)
-            //    {
-            //        (int ok, Version ver) = minRec.IsDriverMinimumRecommended(dev);
-            //        if (ok == -2)
-            //        {
-            //            listOfOldDrivers.Add((1, dev, ver));//1 == recommended
-            //        }
-            //    }
-            //}
-            //if (listOfOldDrivers.Any())
-            //{
-            //    AvailableNotifications.CreateOutdatedDriverWarningForPlugin(_plugin.Name, listOfOldDrivers);
-            //}
+            var listOfOldDrivers = new List<(int, BaseDevice, Version)>();
+            foreach (BaseDevice dev in devices)
+            {
+                if (dev is AMDDevice amdDev && !ResolveAMDDriverVersionAndCheckIfValid(amdDev)) continue;
+                if (_plugin is IDriverIsMinimumRequired minRequired)
+                {
+                    (DriverVersionCheckType ok, Version ver) = minRequired.IsDriverMinimumRequired(dev);
+                    if (ok == DriverVersionCheckType.DriverVersionObsolete) listOfOldDrivers.Add((0, dev, ver)); 
+                }
+                if (_plugin is IDriverIsMinimumRecommended minRecommended)
+                {
+                    (DriverVersionCheckType ok, Version ver) = minRecommended.IsDriverMinimumRecommended(dev);
+                    if (ok == DriverVersionCheckType.DriverVersionObsolete) listOfOldDrivers.Add((1, dev, ver));
+                }
+            }
+            if (listOfOldDrivers.Any()) AvailableNotifications.CreateOutdatedDriverWarningForPlugin(_plugin.GetType().Name, listOfOldDrivers);
         }
 
+        private bool ResolveAMDDriverVersionAndCheckIfValid(AMDDevice amdDev)
+        {
+            var validCrimson = IsAMDCrimsonVersionValid(amdDev.RawDriverVersion);
+            if (validCrimson && (amdDev.ADLReturnCode == 0 || amdDev.ADLReturnCode == 1)) return true;
+            else if (amdDev.ADLReturnCode == 1) AvailableNotifications.CreateADLVersionWarning(amdDev);
+            else AvailableNotifications.CreateADLVersionError(amdDev);
+            return false;
+        }
+        private bool IsAMDCrimsonVersionValid(string version)
+        {
+            if (version.Split('.').Length != 3) return false;
+            return Version.TryParse(version, out var temp);
+        }
         #endregion
 
         #region IGetApiMaxTimeout/IGetApiMaxTimeoutV2

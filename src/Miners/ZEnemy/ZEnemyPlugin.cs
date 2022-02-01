@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace ZEnemy
 {
-    public partial class ZEnemyPlugin : PluginBase //, IDriverIsMinimumRecommended, IDriverIsMinimumRequired
+    public partial class ZEnemyPlugin : PluginBase, IDriverIsMinimumRecommended, IDriverIsMinimumRequired
     {
         public ZEnemyPlugin()
         {
@@ -41,7 +41,7 @@ namespace ZEnemy
             };
         }
 
-        public override Version Version => new Version(16, 1);
+        public override Version Version => new Version(17, 0);
 
         public override string Name => "ZEnemy";
 
@@ -91,26 +91,26 @@ namespace ZEnemy
         }
 
 
-        public (int ret, Version minRequired) IsDriverMinimumRecommended(BaseDevice device)
+        public (DriverVersionCheckType ret, Version minRequired) IsDriverMinimumRecommended(BaseDevice device)
         {
-            Version min = new Version(461, 33);
             if (device is CUDADevice)
             {
-                if (CUDADevice.INSTALLED_NVIDIA_DRIVERS < min) return (-2, min);
+                Version min = new Version(461, 33);
+                if (CUDADevice.INSTALLED_NVIDIA_DRIVERS < min) return (DriverVersionCheckType.DriverVersionObsolete, min);
+                return (DriverVersionCheckType.DriverVersionOK, CUDADevice.INSTALLED_NVIDIA_DRIVERS);
             }
-            else return (-1, new Version(0, 0));
-            return (0, CUDADevice.INSTALLED_NVIDIA_DRIVERS);
+            return (DriverVersionCheckType.DriverCheckNotImplementedForThisDeviceType, new Version(0, 0));
         }
 
-        public (int ret, Version minRequired) IsDriverMinimumRequired(BaseDevice device)
+        public (DriverVersionCheckType ret, Version minRequired) IsDriverMinimumRequired(BaseDevice device)
         {
-            Version min = new Version(411, 31);
             if (device is CUDADevice)
             {
-                if (CUDADevice.INSTALLED_NVIDIA_DRIVERS < min) return (-2, min);
+                Version min = new Version(411, 31);
+                if (CUDADevice.INSTALLED_NVIDIA_DRIVERS < min) return (DriverVersionCheckType.DriverVersionObsolete, min);
+                return (DriverVersionCheckType.DriverVersionOK, CUDADevice.INSTALLED_NVIDIA_DRIVERS);
             }
-            else return (-1, new Version(0, 0));
-            return (0, CUDADevice.INSTALLED_NVIDIA_DRIVERS);
+            return (DriverVersionCheckType.DriverCheckNotImplementedForThisDeviceType, new Version(0, 0));
         }
     }
 }

@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace NanoMiner
 {
-    public partial class NanoMinerPlugin : PluginBase, IDevicesCrossReference//, IDriverIsMinimumRecommended, IDriverIsMinimumRequired
+    public partial class NanoMinerPlugin : PluginBase, IDevicesCrossReference, IDriverIsMinimumRecommended, IDriverIsMinimumRequired
     {
         public NanoMinerPlugin()
         {
@@ -40,7 +40,7 @@ namespace NanoMiner
 
         public override string PluginUUID => "f25fee20-94eb-11ea-a64d-17be303ea466";
 
-        public override Version Version => new Version(16, 2);
+        public override Version Version => new Version(17, 0);
 
         public override string Name => "NanoMiner";
 
@@ -123,27 +123,27 @@ namespace NanoMiner
             return false;
         }
 
-        public (int ret, Version minRequired) IsDriverMinimumRecommended(BaseDevice device)
+        public (DriverVersionCheckType ret, Version minRequired) IsDriverMinimumRecommended(BaseDevice device)
         {
-            var minAMD = new Version(21, 5, 2);
             if (device is AMDDevice amd)
             {
-                if (amd.DEVICE_AMD_DRIVER < minAMD) return (-2, minAMD);
-                return (0, minAMD);
+                var min = new Version(21, 5, 2);
+                if (amd.DEVICE_AMD_DRIVER < min) return (DriverVersionCheckType.DriverVersionObsolete, min);
+                return (DriverVersionCheckType.DriverVersionOK, amd.DEVICE_AMD_DRIVER);
             }
-            return (-1, new Version(0, 0));
+            return (DriverVersionCheckType.DriverCheckNotImplementedForThisDeviceType, new Version(0, 0));
         }
 
 
-        public (int ret, Version minRequired) IsDriverMinimumRequired(BaseDevice device)
+        public (DriverVersionCheckType ret, Version minRequired) IsDriverMinimumRequired(BaseDevice device)
         {
-            var minNVIDIA = new Version(411, 31);
             if (device is CUDADevice nvidia)
             {
-                if (CUDADevice.INSTALLED_NVIDIA_DRIVERS < minNVIDIA) return (-2, minNVIDIA);
-                return (0, minNVIDIA);
+                var min = new Version(411, 31);
+                if (CUDADevice.INSTALLED_NVIDIA_DRIVERS < min) return (DriverVersionCheckType.DriverVersionObsolete, min);
+                return (DriverVersionCheckType.DriverVersionOK, CUDADevice.INSTALLED_NVIDIA_DRIVERS);
             }
-            return (-1, new Version(0, 0));
+            return (DriverVersionCheckType.DriverCheckNotImplementedForThisDeviceType, new Version(0, 0));
         }
     }
 }
